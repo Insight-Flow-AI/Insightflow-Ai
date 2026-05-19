@@ -571,4 +571,4 @@ MIT License
 | Name | Role |
 |---|---|
 | S. Gurumurthy | Project Lead |
-| S.Harevasu | ML Engineer  |
+| S. Harevasu | ML Engineer  |
