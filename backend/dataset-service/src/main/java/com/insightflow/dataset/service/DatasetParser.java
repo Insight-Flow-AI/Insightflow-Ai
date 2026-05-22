@@ -50,12 +50,10 @@ public class DatasetParser {
             } else {
                 throw new IllegalArgumentException("Uploaded file is empty");
             }
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
-            // Graceful fallback for xlsx or parsing exceptions to ensure a robust user upload experience
-            result.setRowCount(120);
-            result.setColumnCount(4);
-            result.setColumns(Arrays.asList("Date", "Region", "Sales", "Profit"));
-            result.setSummary("Dataset processed automatically via standard format parser. Included elements: Date, Region, Sales, Profit.");
+            throw new RuntimeException("Corrupted dataset file: Unable to parse contents.", e);
         }
         return result;
     }

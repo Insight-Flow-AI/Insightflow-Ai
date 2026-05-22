@@ -38,4 +38,6 @@ public class Dataset {
     private String summary;
 
     private String userId;
+
+    private String fileId;
 }

@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+import org.bson.types.ObjectId;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -32,6 +34,9 @@ public class DatasetController {
     @Autowired
     private JwtUtils jwtUtils;
 
+    @Autowired
+    private GridFsTemplate gridFsTemplate;
+
     @PostMapping("/upload")
     public ResponseEntity<?> upload(
             @RequestParam("file") MultipartFile file,
@@ -47,8 +52,44 @@ public class DatasetController {
             }
         }
 
-        // Parse dataset details
-        DatasetParser.ParseResult parseResult = datasetParser.parse(file);
+        // 1. Empty file validation
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body("Invalid upload: File is empty.");
+        }
+
+        // 2. Wrong format validation
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || !originalFilename.toLowerCase().endsWith(".csv")) {
+            return ResponseEntity.badRequest().body("Invalid upload: Only .csv files are supported.");
+        }
+
+        // 3. Huge file validation (limit to 50MB)
+        if (file.getSize() > 50 * 1024 * 1024) {
+            return ResponseEntity.badRequest().body("Invalid upload: File size exceeds the 50MB limit.");
+        }
+
+        // 4. Corrupted file validation (Parsing)
+        DatasetParser.ParseResult parseResult;
+        try {
+            parseResult = datasetParser.parse(file);
+        } catch (Exception e) {
+            log.error("Corrupted file detected: ", e);
+            return ResponseEntity.badRequest().body("Invalid upload: Corrupted or unreadable file.");
+        }
+
+        // Securely store the raw file into MongoDB GridFS
+        ObjectId fileId = null;
+        try {
+            fileId = gridFsTemplate.store(
+                    file.getInputStream(),
+                    file.getOriginalFilename(),
+                    file.getContentType()
+            );
+            log.info("File successfully stored in GridFS with ID: {}", fileId);
+        } catch (Exception e) {
+            log.error("Failed to store file in GridFS", e);
+            return ResponseEntity.internalServerError().body("Failed to save file securely.");
+        }
 
         // Calculate size in readable format
         double sizeInMb = (double) file.getSize() / (1024 * 1024);
@@ -66,6 +107,7 @@ public class DatasetController {
                 .columns(parseResult.getColumns())
                 .summary(parseResult.getSummary())
                 .userId(userId)
+                .fileId(fileId != null ? fileId.toString() : null)
                 .build();
 
         Dataset savedDataset = datasetRepository.save(dataset);
