@@ -11,6 +11,7 @@ import {
   TrendingUp,
   AlertTriangle
 } from 'lucide-react';
+import { authService } from '../../services/authService';
 
 export default function Sidebar() {
   const location = useLocation();
@@ -119,6 +120,7 @@ export default function Sidebar() {
             </div>
           </div>
           <button 
+            onClick={authService.logout}
             className="p-1.5 rounded-lg text-gray-500 hover:text-red-500 hover:bg-[#1C1C1C] transition-colors"
             title="Logout"
           >

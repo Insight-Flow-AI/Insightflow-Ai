@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Auth from '../pages/Auth';
 import Dashboard from '../pages/Dashboard';
 import Upload from '../pages/Upload';
@@ -6,14 +6,16 @@ import Insights from '../pages/Dashboard/Insights';
 import Chat from '../pages/Dashboard/Chat';
 import Reports from '../pages/Reports';
 import Settings from '../pages/Settings';
+import { authService } from '../services/authService';
 
 export default function AppRoutes() {
-  const isAuthenticated = true; // Mock authentication
+  const location = useLocation();
+  const authenticated = authService.isAuthenticated();
 
   return (
     <Routes>
       <Route path="/login" element={<Auth />} />
-      {isAuthenticated ? (
+      {authenticated ? (
         <>
           <Route path="/" element={<Dashboard />} />
           <Route path="/upload" element={<Upload />} />
@@ -23,7 +25,7 @@ export default function AppRoutes() {
           <Route path="/settings" element={<Settings />} />
         </>
       ) : (
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" state={{ from: location }} replace />} />
       )}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import KPICard from '../../components/common/KPICard';
 import RevenueChart from '../../components/charts/RevenueChart';
 import AIRecommendationCard from '../../components/common/AIRecommendationCard';
+import { analyticsService } from '../../services/analyticsService';
 import { 
   Lightbulb, 
   TrendingUp, 
@@ -14,11 +15,30 @@ import {
   Send
 } from 'lucide-react';
 
+const iconMap = {
+  Lightbulb,
+  TrendingUp,
+  Users,
+  Database,
+  AlertTriangle,
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [chatInput, setChatInput] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const recommendations = [
+  const [kpis, setKpis] = useState({
+    totalRevenue: '₹24.6L',
+    activeUsers: '8,412',
+    anomalies: '3',
+    datasets: '17',
+  });
+  
+  const [revenueTrend, setRevenueTrend] = useState(null);
+  
+  const [recommendations, setRecommendations] = useState([
     {
       icon: TrendingUp,
       title: 'Revenue dip detected',
@@ -26,7 +46,7 @@ export default function Dashboard() {
       variant: 'warning',
     },
     {
-      icon: TrendingUp,
+      icon: Lightbulb,
       title: 'Increase ad spend',
       description: 'Model predicts 12% lift with ₹50K ad budget.',
       variant: 'success',
@@ -37,7 +57,61 @@ export default function Dashboard() {
       description: 'Cluster B customers show 3× higher LTV potential.',
       variant: 'info',
     },
-  ];
+  ]);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      setLoading(true);
+      setError(null);
+      try {
+        // Parallel requests using Promise.allSettled for maximum resilience
+        const [chartsResult, reportResult] = await Promise.allSettled([
+          analyticsService.getCharts(),
+          analyticsService.getReport()
+        ]);
+
+        if (chartsResult.status === 'fulfilled') {
+          const chartsData = chartsResult.value;
+          if (chartsData) {
+            setKpis({
+              totalRevenue: chartsData.kpis?.["Total revenue"] || "₹24.6L",
+              activeUsers: chartsData.kpis?.["Active users"] || "8,412",
+              anomalies: chartsData.kpis?.["Anomalies"] || "3",
+              datasets: chartsData.kpis?.["Datasets"] || "17",
+            });
+            if (chartsData.revenueTrend) {
+              setRevenueTrend(chartsData.revenueTrend);
+            }
+          }
+        } else {
+          console.error("Failed to load charts:", chartsResult.reason);
+          setError("Connecting to live services failed. Displaying simulated offline mode.");
+        }
+
+        if (reportResult.status === 'fulfilled') {
+          const reportData = reportResult.value;
+          if (reportData && reportData.recommendations) {
+            const mappedRecs = reportData.recommendations.map(rec => ({
+              icon: iconMap[rec.icon] || Lightbulb,
+              title: rec.title,
+              description: rec.description,
+              variant: rec.variant || 'info'
+            }));
+            setRecommendations(mappedRecs);
+          }
+        } else {
+          console.error("Failed to load report:", reportResult.reason);
+        }
+      } catch (err) {
+        console.error("Dashboard mount error:", err);
+        setError("Connecting to live services failed. Displaying simulated offline mode.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDashboardData();
+  }, []);
 
   const handleChatSubmit = (e) => {
     e.preventDefault();
@@ -48,34 +122,42 @@ export default function Dashboard() {
 
   return (
     <MainLayout title="Overview dashboard">
+      {/* Offline resilient warning banner */}
+      {error && (
+        <div className="mb-6 flex items-center gap-3 bg-[#2A1E1E] border border-red-900/40 rounded-xl px-4 py-3.5 text-red-400 text-xs animate-pulse">
+          <AlertTriangle size={16} className="text-red-500 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
+
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <KPICard
           title="Total revenue"
-          value="₹24.6L"
+          value={kpis.totalRevenue}
           changeText="↑ +12.3% vs last month"
           changeColor="text-green-500"
           icon={TrendingUp}
         />
         <KPICard
           title="Active users"
-          value="8,412"
+          value={kpis.activeUsers}
           changeText="↑ +5.7% this week"
           changeColor="text-green-500"
           icon={Users}
         />
         <KPICard
           title="Anomalies"
-          value="3"
-          changeText="⚠ 2 new today"
+          value={kpis.anomalies}
+          changeText="⚠ Active detections"
           changeColor="text-red-500"
           icon={AlertTriangle}
         />
         <KPICard
           title="Datasets"
-          value="17"
-          changeText="⟳ 4 processing"
-          changeColor="text-gray-500"
+          value={kpis.datasets}
+          changeText="⟳ Real-time database"
+          changeColor="text-gray-400"
           icon={Database}
         />
       </div>
@@ -84,7 +166,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Revenue Trend Chart */}
         <div className="lg:col-span-2">
-          <RevenueChart />
+          <RevenueChart data={revenueTrend} />
         </div>
 
         {/* AI Recommendations Panel */}
@@ -96,7 +178,7 @@ export default function Dashboard() {
                 AI recommendations
               </h3>
               <span className="px-2 py-0.5 text-[10px] font-bold text-white bg-[#534AB7] rounded-full">
-                3 new
+                {recommendations.length} total
               </span>
             </div>
             

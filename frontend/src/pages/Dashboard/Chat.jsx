@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import MainLayout from '../../components/layout/MainLayout';
 import Card from '../../components/common/Card';
-import { Send, Loader } from 'lucide-react';
+import { Send, Loader, AlertTriangle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { analyticsService } from '../../services/analyticsService';
 
 const SAMPLE_CHART_DATA = [
   { month: 'Q1', revenue: 4500 },
@@ -34,6 +35,64 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
+  const processAIQuery = async (query) => {
+    setLoading(true);
+    try {
+      const response = await analyticsService.askChatbot(query);
+      const isTrend = query.toLowerCase().includes('trend') || 
+                      query.toLowerCase().includes('q2') || 
+                      query.toLowerCase().includes('revenue') || 
+                      query.toLowerCase().includes('sales') ||
+                      query.toLowerCase().includes('profit');
+      
+      let chartData = null;
+      if (isTrend) {
+        try {
+          const chartsData = await analyticsService.getCharts();
+          if (chartsData && chartsData.revenueTrend) {
+            chartData = chartsData.revenueTrend;
+          }
+        } catch (err) {
+          console.error("Failed to load live charts data for chatbot balloon:", err);
+        }
+      }
+
+      const aiMessage = {
+        id: Date.now() + 1,
+        sender: 'ai',
+        text: response.answer || "I've processed your analytics inquiry successfully.",
+        chartData: chartData,
+        timestamp: new Date(response.timestamp || Date.now()),
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (err) {
+      console.error("Failed to call chatbot microservice:", err);
+      // Graceful offline fallback mode
+      const isTrend = query.toLowerCase().includes('trend') || 
+                      query.toLowerCase().includes('q2') || 
+                      query.toLowerCase().includes('revenue') || 
+                      query.toLowerCase().includes('sales');
+      
+      const fallbackText = isTrend
+        ? `[Simulated Offline Answer] Here is the revenue trend analysis for "${query}". The projection shows a positive linear trend entering Q3.`
+        : `[Simulated Offline Answer] I've analyzed the dataset for "${query}". The metrics indicate stable customer engagement levels with localized optimization opportunities in segment B.`;
+      
+      const aiMessage = {
+        id: Date.now() + 1,
+        sender: 'ai',
+        text: fallbackText,
+        chartData: isTrend ? SAMPLE_CHART_DATA : null,
+        timestamp: new Date(),
+        offlineNotice: true
+      };
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (location.state?.initialQuery) {
       const query = location.state.initialQuery;
@@ -49,52 +108,26 @@ export default function Chat() {
       };
 
       setMessages((prev) => [...prev, userMessage]);
-      setLoading(true);
-
-      // Simulate AI processing
-      setTimeout(() => {
-        const isTrend = query.toLowerCase().includes('trend') || query.toLowerCase().includes('q2') || query.toLowerCase().includes('revenue');
-        const aiMessage = {
-          id: Date.now() + 1,
-          sender: 'ai',
-          text: isTrend 
-            ? 'Here is the revenue trend analysis for your query. The projection shows a positive linear trend entering Q3.'
-            : `I've analyzed the dataset for "${query}". The metrics indicate stable customer engagement levels with localized optimization opportunities in segment B.`,
-          chart: isTrend,
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-        setLoading(false);
-      }, 1000);
+      processAIQuery(query);
     }
   }, [location.state]);
 
 
   const handleSend = () => {
-    if (!input.trim()) return;
+    if (!input.trim() || loading) return;
+    const query = input;
 
     // Add user message
     const userMessage = {
-      id: messages.length + 1,
+      id: Date.now(),
       sender: 'user',
-      text: input,
+      text: query,
       timestamp: new Date(),
     };
-    setMessages([...messages, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
-    setLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage = {
-        id: messages.length + 2,
-        sender: 'ai',
-        text: `I found insights about "${input}". Let me analyze that for you...`,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      setLoading(false);
-    }, 1000);
+    processAIQuery(query);
   };
 
   return (
@@ -114,14 +147,32 @@ export default function Chat() {
                     : 'bg-dark-card border border-dark-border text-gray-300 rounded-lg rounded-tl-none'
                 } p-4`}
               >
+                {msg.offlineNotice && (
+                  <div className="flex items-center gap-1.5 text-amber-500 text-[10px] font-bold mb-2">
+                    <AlertTriangle size={12} />
+                    <span>Connecting to AI service failed. Showing simulated offline insights.</span>
+                  </div>
+                )}
                 <p className="text-sm mb-2">{msg.text}</p>
-                {msg.chart && (
-                  <div className="mt-4 bg-dark-border rounded-lg p-4">
+                
+                {msg.chartData && (
+                  <div className="mt-4 bg-[#1E1E1E] border border-[#2D3748] rounded-lg p-4">
                     <ResponsiveContainer width="100%" height={200}>
-                      <LineChart data={SAMPLE_CHART_DATA}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
-                        <XAxis dataKey="month" stroke="#9CA3AF" />
-                        <YAxis stroke="#9CA3AF" />
+                      <LineChart data={msg.chartData}>
+                        <CartesianGrid strokeDasharray="0" stroke="#252525" vertical={false} />
+                        <XAxis 
+                          dataKey={msg.chartData[0] && 'name' in msg.chartData[0] ? 'name' : 'month'} 
+                          stroke="#555555" 
+                          tick={{ fill: '#777777', fontSize: 10 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis 
+                          stroke="#555555" 
+                          tick={{ fill: '#777777', fontSize: 10 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
                         <Tooltip
                           contentStyle={{
                             backgroundColor: '#1A1F2E',
@@ -132,14 +183,42 @@ export default function Chat() {
                         />
                         <Line
                           type="monotone"
-                          dataKey="revenue"
+                          dataKey={msg.chartData[0] && 'Revenue' in msg.chartData[0] ? 'Revenue' : 'revenue'}
                           stroke="#534AB7"
-                          strokeWidth={2}
+                          strokeWidth={3}
+                          dot={{ r: 3, stroke: '#534AB7', strokeWidth: 1, fill: '#534AB7' }}
+                          activeDot={{ r: 5 }}
                         />
+                        {msg.chartData[0] && 'Profit' in msg.chartData[0] && (
+                          <Line
+                            type="monotone"
+                            dataKey="Profit"
+                            stroke="#10B981"
+                            strokeWidth={3}
+                            strokeDasharray="5 5"
+                            dot={{ r: 3, stroke: '#10B981', strokeWidth: 1, fill: '#10B981' }}
+                            activeDot={{ r: 5 }}
+                          />
+                        )}
                       </LineChart>
                     </ResponsiveContainer>
+                    <div className="flex items-center gap-4 mt-3 px-1 justify-start">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded bg-[#534AB7] block"></span>
+                        <span className="text-[10px] font-semibold text-gray-400">
+                          {msg.chartData[0] && 'Revenue' in msg.chartData[0] ? 'Revenue' : 'Actual'}
+                        </span>
+                      </div>
+                      {msg.chartData[0] && 'Profit' in msg.chartData[0] && (
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded bg-[#10B981] block"></span>
+                          <span className="text-[10px] font-semibold text-gray-400">Profit</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
+                
                 <p className="text-xs mt-2 opacity-70">
                   {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
