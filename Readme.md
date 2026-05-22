@@ -336,6 +336,22 @@ cd insightflow-ai
 
 ---
 
+# Docker Setup (Recommended)
+
+The easiest way to run the entire application (frontend, backend microservices, and databases) is using Docker Compose:
+
+```bash
+# Run everything in detached mode
+docker compose up -d --build
+```
+
+Access the application:
+- **Frontend UI:** http://localhost:5173
+- **API Gateway:** http://localhost:4000
+
+
+---
+
 # Frontend Setup
 
 ```bash

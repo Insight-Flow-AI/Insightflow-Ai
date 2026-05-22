@@ -9,7 +9,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const data = [
+
+const DEFAULT_DATA = [
   { month: 'Nov', Actual: 4500, Predicted: 4200 },
   { month: 'Dec', Actual: 5200, Predicted: 5100 },
   { month: 'Jan', Actual: 4800, Predicted: 5300 },
@@ -19,8 +20,18 @@ const data = [
   { month: 'May', Actual: 8200, Predicted: 8100 },
 ];
 
-export default function RevenueChart() {
+export default function RevenueChart({ data: propData }) {
   const navigate = useNavigate();
+  const chartData = propData || DEFAULT_DATA;
+  const firstItem = chartData && chartData[0];
+
+  // Dynamically map keys to support both local mocks and backend payloads
+  const xAxisKey = firstItem && 'name' in firstItem ? 'name' : 'month';
+  const actualKey = firstItem && 'Revenue' in firstItem ? 'Revenue' : 'Actual';
+  const predictedKey = firstItem && 'Profit' in firstItem ? 'Profit' : 'Predicted';
+
+  const actualLabel = actualKey === 'Revenue' ? 'Revenue' : 'Actual';
+  const predictedLabel = predictedKey === 'Profit' ? 'Profit' : 'Predicted';
 
   return (
     <div className="bg-[#1C1C1C] border border-[#2A2A2A] rounded-xl p-6 shadow-sm">
@@ -38,10 +49,10 @@ export default function RevenueChart() {
       {/* Chart */}
       <div className="h-[260px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+          <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="0" stroke="#252525" vertical={false} />
             <XAxis 
-              dataKey="month" 
+              dataKey={xAxisKey} 
               stroke="#555555" 
               tick={{ fill: '#777777', fontSize: 11 }}
               axisLine={false}
@@ -66,7 +77,7 @@ export default function RevenueChart() {
             />
             <Line
               type="monotone"
-              dataKey="Actual"
+              dataKey={actualKey}
               stroke="#534AB7"
               strokeWidth={3}
               dot={{ r: 4, stroke: '#534AB7', strokeWidth: 1, fill: '#534AB7' }}
@@ -74,7 +85,7 @@ export default function RevenueChart() {
             />
             <Line
               type="monotone"
-              dataKey="Predicted"
+              dataKey={predictedKey}
               stroke="#10B981"
               strokeWidth={3}
               strokeDasharray="5 5"
@@ -89,11 +100,11 @@ export default function RevenueChart() {
       <div className="flex items-center gap-6 mt-6 px-2 justify-start">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded bg-[#534AB7] block"></span>
-          <span className="text-xs font-semibold text-gray-400">Actual</span>
+          <span className="text-xs font-semibold text-gray-400">{actualLabel}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 rounded bg-[#10B981] block"></span>
-          <span className="text-xs font-semibold text-gray-400">Predicted</span>
+          <span className="text-xs font-semibold text-gray-400">{predictedLabel}</span>
         </div>
       </div>
     </div>
