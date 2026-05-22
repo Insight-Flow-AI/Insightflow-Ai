@@ -1,22 +1,15 @@
-# Ignore raw Java sources and tests (only compiled target/classes is needed)
-**/src/
-**/target/maven-status/
-**/target/maven-archiver/
-**/target/surefire-reports/
-**/target/generated-sources/
-**/target/generated-test-sources/
-**/target/test-classes/
-**/target/*-SNAPSHOT.jar
-**/target/*.jar
+# Exclude compiled output (will be built inside Docker)
+**/target/
 
-# Ignore Maven wrapper and project metadata
-.mvn/
-mvnw
-mvnw.cmd
-pom.xml
-**/pom.xml
-.git/
+# Exclude IDE/OS files
 .idea/
 *.iml
+.git/
+**/.git/
+
+# Exclude local scripts (not needed in Docker)
 run-service.ps1
 copy-dependencies.ps1
+
+# Exclude pre-built lib folder (no longer used in multi-stage builds)
+lib/

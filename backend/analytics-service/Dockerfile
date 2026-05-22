@@ -1,15 +1,30 @@
-FROM eclipse-temurin:23-jre-alpine
+# ── Stage 1: Build ──────────────────────────────────────────────────────────
+FROM maven:3.9-eclipse-temurin-21 AS builder
+
+WORKDIR /workspace
+
+COPY pom.xml .
+COPY common-lib/pom.xml          common-lib/pom.xml
+COPY auth-service/pom.xml        auth-service/pom.xml
+COPY api-gateway/pom.xml         api-gateway/pom.xml
+COPY dataset-service/pom.xml     dataset-service/pom.xml
+COPY analytics-service/pom.xml   analytics-service/pom.xml
+COPY notification-service/pom.xml notification-service/pom.xml
+
+RUN mvn dependency:go-offline -B --no-transfer-progress
+
+COPY common-lib/src       common-lib/src
+COPY analytics-service/src analytics-service/src
+
+RUN mvn -pl common-lib,analytics-service -am clean package -DskipTests -B --no-transfer-progress
+
+# ── Stage 2: Run ────────────────────────────────────────────────────────────
+FROM eclipse-temurin:21-jre-alpine
+
 WORKDIR /app
 
-# Copy aligned library jars
-COPY lib/services/ /app/lib/
-
-# Copy common-lib compiled classes
-COPY common-lib/target/classes/ /app/common-lib-classes/
-
-# Copy service compiled classes
-COPY analytics-service/target/classes/ /app/classes/
+COPY --from=builder /workspace/analytics-service/target/analytics-service-*.jar app.jar
 
 EXPOSE 8083
 
-ENTRYPOINT ["java", "-cp", "/app/classes:/app/common-lib-classes:/app/lib/*", "com.insightflow.analytics.AnalyticsServiceApplication", "--spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration,org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration,org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration,org.springframework.boot.autoconfigure.security.reactive.ReactiveSecurityAutoConfiguration,org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration,org.springframework.boot.actuate.autoconfigure.security.reactive.ReactiveManagementWebSecurityAutoConfiguration"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

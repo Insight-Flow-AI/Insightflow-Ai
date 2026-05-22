@@ -1,11 +1,11 @@
+# Exclude heavy runtime directories not needed in Docker build
 node_modules/
-.git/
 dist/
-src/
-public/
-package.json
-package-lock.json
-vite.config.js
-tailwind.config.js
-postcss.config.js
-README.md
+
+# Exclude git
+.git/
+
+# Exclude local env files
+.env.local
+.env.*.local
+
