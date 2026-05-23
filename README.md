@@ -560,12 +560,6 @@ The project has strong potential in:
 
 ---
 
-# License
-
-MIT License
-
----
-
 # Contributors
 
 | Name | Role |
