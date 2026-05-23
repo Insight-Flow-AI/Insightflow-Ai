@@ -398,16 +398,17 @@ kafka-server-start.sh config/server.properties
 
 ---
 
-# API Endpoints
+# API Endpoints Status
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | /api/auth/login | Login |
-| POST | /api/auth/register | Register |
-| POST | /api/dataset/upload | Upload dataset |
-| GET | /api/analytics/report | Analytics report |
-| GET | /api/charts | Dashboard charts |
-| GET | /api/predictions | AI predictions |
+| Method | Endpoint | Description | Status |
+|---|---|---|---|
+| POST | `/api/auth/register` | Register new user in MongoDB Atlas | ✅ Completed & Working |
+| POST | `/api/auth/login` | Login and return JWT token | ✅ Completed & Working |
+| POST | `/api/dataset/upload` | Upload dataset (CSV supported, saving to GridFS) | ✅ Completed & Working (Pending Excel/JSON) |
+| GET | `/api/dataset/history` | Retrieve user's dataset history | ✅ Completed & Working |
+| GET | `/api/analytics/report` | Analytics report generation | 🚧 Pending Implementation |
+| GET | `/api/charts` | Dashboard charts data retrieval | 🚧 Pending Implementation |
+| GET | `/api/predictions` | AI predictions from FastAPI | 🚧 Pending Implementation |
 
 ---
 
