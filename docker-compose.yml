@@ -4,6 +4,16 @@ services:
   # Infrastructure
   # ──────────────────────────────────────────────────────────────────────────
 
+  mongodb:
+    image: mongo:6.0
+    container_name: insightflow-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - insightflow-network
+
   redis:
     image: redis:7.0-alpine
     container_name: insightflow-redis
@@ -80,6 +90,8 @@ services:
       - "8081:8081"
     environment:
       - MONGODB_URI=${MONGODB_URI}
+    depends_on:
+      - mongodb
     networks:
       - insightflow-network
 
@@ -96,6 +108,8 @@ services:
       - MONGODB_URI=${MONGODB_URI}
       - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
     depends_on:
+      mongodb:
+        condition: service_started
       kafka:
         condition: service_healthy
     networks:
@@ -116,6 +130,8 @@ services:
       - REDIS_PORT=${REDIS_PORT}
       - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
     depends_on:
+      mongodb:
+        condition: service_started
       redis:
         condition: service_healthy
       kafka:
@@ -177,6 +193,8 @@ services:
       - MONGODB_URI=${MONGODB_URI}
       - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
     depends_on:
+      mongodb:
+        condition: service_started
       kafka:
         condition: service_healthy
     networks:
@@ -202,6 +220,7 @@ services:
 
 volumes:
   redis_data:
+  mongo_data:
 
 networks:
   insightflow-network:

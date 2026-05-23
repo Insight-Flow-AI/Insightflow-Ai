@@ -30,8 +30,15 @@ async function request(endpoint, options = {}) {
     }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Request failed with status ${response.status}`);
+      let errorMessage = '';
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json().catch(() => ({}));
+        errorMessage = errorData.message || errorData.error || '';
+      } else {
+        errorMessage = await response.text().catch(() => '');
+      }
+      throw new Error(errorMessage || `Request failed with status ${response.status}`);
     }
 
     // Standard JSON parse or fallback for empty response bodies

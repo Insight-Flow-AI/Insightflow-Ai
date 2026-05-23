@@ -108,21 +108,33 @@ export default function Upload() {
       );
     } catch (err) {
       console.error('File upload failed:', err);
-      // If server is offline, simulate a beautiful mock processing step pipeline
-      setUploadedFiles((prev) =>
-        prev.map((item) => {
-          if (item.id === tempId) {
-            return {
-              ...item,
-              id: `mock-uploaded-${Date.now()}`,
-              status: 'complete',
-              currentStep: 5,
-            };
-          }
-          return item;
-        })
-      );
-      setError('File uploaded in Local Simulator Mode (Backend connection bypassed).');
+      const isNetworkError = !err.message || 
+        err.message.toLowerCase().includes('failed to fetch') || 
+        err.message.toLowerCase().includes('networkerror') || 
+        err.message.toLowerCase().includes('network error');
+
+      if (isNetworkError) {
+        // If server is offline, simulate a beautiful mock processing step pipeline
+        setUploadedFiles((prev) =>
+          prev.map((item) => {
+            if (item.id === tempId) {
+              return {
+                ...item,
+                id: `mock-uploaded-${Date.now()}`,
+                status: 'complete',
+                currentStep: 5,
+              };
+            }
+            return item;
+          })
+        );
+        setError('File uploaded in Local Simulator Mode (Backend connection bypassed).');
+      } else {
+        // Remove the temporary file from list
+        setUploadedFiles((prev) => prev.filter((item) => item.id !== tempId));
+        // Display the specific backend validation error
+        setError(err.message || 'File upload failed.');
+      }
     }
   };
 

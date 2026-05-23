@@ -16,6 +16,7 @@ import org.bson.types.ObjectId;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -52,29 +53,37 @@ public class DatasetController {
             }
         }
 
-        // 1. Empty file validation
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body("Invalid upload: File is empty.");
+        // 1. File Exists Check (Rule 1)
+        if (file == null || file.getOriginalFilename() == null || file.getOriginalFilename().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "No file uploaded"));
         }
 
-        // 2. Wrong format validation
+        // 2. Empty File Check (Rule 2)
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Uploaded file is empty"));
+        }
+
+        // 3. CSV Type Validation (Rule 3)
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || !originalFilename.toLowerCase().endsWith(".csv")) {
-            return ResponseEntity.badRequest().body("Invalid upload: Only .csv files are supported.");
+            return ResponseEntity.badRequest().body(Map.of("message", "Only CSV files are allowed"));
         }
 
-        // 3. Huge file validation (limit to 50MB)
+        // 11. File Size Limit Check (Rule 11 - 50MB)
         if (file.getSize() > 50 * 1024 * 1024) {
-            return ResponseEntity.badRequest().body("Invalid upload: File size exceeds the 50MB limit.");
+            return ResponseEntity.badRequest().body(Map.of("message", "File size exceeds limit"));
         }
 
-        // 4. Corrupted file validation (Parsing)
+        // 4. Structural Validations (Rules 4 to 9 via Parser)
         DatasetParser.ParseResult parseResult;
         try {
             parseResult = datasetParser.parse(file);
+        } catch (IllegalArgumentException e) {
+            log.warn("Dataset validation failed: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             log.error("Corrupted file detected: ", e);
-            return ResponseEntity.badRequest().body("Invalid upload: Corrupted or unreadable file.");
+            return ResponseEntity.badRequest().body(Map.of("message", "Corrupted or invalid CSV structure"));
         }
 
         // Securely store the raw file into MongoDB GridFS

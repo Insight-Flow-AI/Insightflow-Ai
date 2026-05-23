@@ -127,6 +127,7 @@ target/
 *.ear
 *.nar
 hs_err_pid*
+backend/dataset-service/src/test/java/com/insightflow/dataset/service/DatasetParserTest.java
 
 # ---------------------------------------------------------------
 # CSV / test data (optional — remove if you want these tracked)
