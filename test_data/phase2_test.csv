@@ -1,0 +1,21 @@
+CustomerID,Age,Salary,Email,Phone,JoiningDate,Department,Churn,Status,Notes
+C001,25,45000,john@example.com,9876543210,2020-01-15,Engineering,No,Active,Good employee
+C002,310,85000,invalid-email,123,2021-03-22,Marketing,Yes,Active,Senior staff
+C003,34,,alice@company.com,9988776655,2019-07-01,HR,No,Active,
+C004,29,62000,bob@firm.net,8877665544,not-a-date,Engineering,Yes,Active,New joiner
+C005,45,150000,carol@biz.org,7766554433,2018-05-10,Finance,No,Active,High performer
+C006,,38000,dave@mail.com,6655443322,2022-11-30,Marketing,No,Active,
+C007,52,72000,eve@test.io,5544332211,2017-08-25,Engineering,No,Active,Team lead
+C008,31,55000,frank@demo.com,4433221100,2021-06-18,HR,Yes,Active,
+C009,27,48000,grace@sample.com,3322110099,2020-09-05,Finance,No,Active,Good
+C010,38,91000,henry@example.com,2211009988,2023-01-10,Marketing,No,Active,Manager
+C011,-5,25000,iris@company.com,1100998877,2021-04-22,Engineering,No,Active,Junior
+C012,41,200000000,jack@firm.net,9900887766,2019-12-01,Finance,No,Active,Director
+C013,33,67000,bad@@email,8800776655,2020-07-15,HR,No,Active,
+C014,28,53000,kate@mail.com,77,2018-03-20,Engineering,No,Active,
+C015,55,,lisa@test.io,6600554433,2022-08-08,Marketing,No,Active,
+C016,22,30000,mike@demo.com,5500443322,2023-05-01,HR,No,Active,Intern
+C017,36,78000,nina@sample.com,4400332211,2020-11-15,Finance,No,Active,
+C018,44,88000,oscar@example.com,3300221100,2017-09-30,Engineering,No,Active,
+C019,29,61000,paula@company.com,2200110099,2021-02-14,Marketing,No,Active,
+C020,51,105000,quincy@firm.net,1100009988,2016-06-22,Finance,No,Active,Senior
