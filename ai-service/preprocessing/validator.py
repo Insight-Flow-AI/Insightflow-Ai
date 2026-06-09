@@ -802,7 +802,7 @@ async def validate_dataset(dataset_id: str,
 
     # 3. Parse CSV with Pandas
     try:
-        df = pd.read_csv(io.BytesIO(file_data))
+        df = pd.read_csv(io.BytesIO(file_data), on_bad_lines='skip', engine='python')
     except Exception as e:
         logger.error(f"[Phase 2] CSV parse failed: {e}")
         await db.datasets.update_one(
