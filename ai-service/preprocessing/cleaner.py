@@ -162,7 +162,7 @@ async def clean_dataset(dataset_id: str):
         return
 
     try:
-        df = pd.read_csv(io.BytesIO(file_data))
+        df = pd.read_csv(io.BytesIO(file_data), on_bad_lines='skip', engine='python')
     except Exception as e:
         logger.error(f"[Phase 3] CSV parse failed: {e}")
         return

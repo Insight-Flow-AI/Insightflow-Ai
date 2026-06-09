@@ -33,8 +33,8 @@ async def consume_kafka():
     
     try:
         consumer = Consumer(conf)
-        consumer.subscribe([KAFKA_TOPIC])
-        logger.info(f"Subscribed to Kafka topic: {KAFKA_TOPIC} at {KAFKA_BROKER}")
+        consumer.subscribe([KAFKA_TOPIC, "feature-engineering"])
+        logger.info(f"Subscribed to Kafka topics: {KAFKA_TOPIC}, feature-engineering at {KAFKA_BROKER}")
     except Exception as e:
         logger.error(f"Failed to connect to Kafka: {e}")
         return
@@ -56,12 +56,18 @@ async def consume_kafka():
 
         try:
             payload = json.loads(msg.value().decode('utf-8'))
-            logger.info(f"Received Kafka event: {payload}")
+            topic = msg.topic()
+            logger.info(f"Received Kafka event on {topic}: {payload}")
             
             dataset_id = payload.get("datasetId")
             if dataset_id:
-                # Trigger the full ML pipeline asynchronously
-                asyncio.create_task(process_dataset_pipeline(dataset_id))
+                if topic == KAFKA_TOPIC:
+                    # Trigger the Phase 2 & 3 pipeline asynchronously
+                    asyncio.create_task(process_dataset_pipeline(dataset_id))
+                elif topic == "feature-engineering":
+                    # Trigger the Phase 4 pipeline asynchronously
+                    from feature_engineering.engineer import process_feature_engineering
+                    asyncio.create_task(process_feature_engineering(dataset_id))
         except Exception as e:
             logger.error(f"Failed to process Kafka message: {e}")
 
