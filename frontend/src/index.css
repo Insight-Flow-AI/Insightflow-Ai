@@ -70,3 +70,51 @@ button {
   animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
 }
 
+/* Glassmorphism & Animations for Premium UI */
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+}
+
+.glass-card-complete {
+  background: rgba(16, 185, 129, 0.08); /* Emerald */
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 20px 0 rgba(16, 185, 129, 0.15), inset 0 0 10px 0 rgba(16, 185, 129, 0.1);
+}
+
+.glass-card-active {
+  background: rgba(59, 130, 246, 0.08); /* Blue */
+  border: 1px solid rgba(59, 130, 246, 0.6);
+  box-shadow: 0 0 25px 0 rgba(59, 130, 246, 0.2), inset 0 0 15px 0 rgba(59, 130, 246, 0.15);
+  animation: border-glow 2.5s infinite alternate;
+}
+
+.glass-card-pending {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  opacity: 0.7;
+}
+
+@keyframes border-glow {
+  0% {
+    box-shadow: 0 0 15px 0 rgba(59, 130, 246, 0.2), inset 0 0 10px 0 rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 35px 0 rgba(59, 130, 246, 0.3), inset 0 0 20px 0 rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.9);
+  }
+}
+
+.pulse-icon {
+  animation: icon-pulse 2s infinite;
+}
+
+@keyframes icon-pulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.8)); }
+  100% { transform: scale(1); opacity: 0.8; }
+}

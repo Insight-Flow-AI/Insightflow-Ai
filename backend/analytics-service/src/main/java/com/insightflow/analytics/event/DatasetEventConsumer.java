@@ -44,13 +44,11 @@ public class DatasetEventConsumer {
             // 2. Save analytics document to MongoDB
             analyticsRepository.save(analytics);
 
-            // 3. Update parent Dataset status in MongoDB to complete
+            // 3. (Removed aggressive pipeline status overwrite that conflicted with AI Service)
             Dataset dataset = mongoTemplate.findById(datasetId, Dataset.class);
             if (dataset != null) {
-                dataset.setStatus("complete");
-                dataset.setCurrentStep(5); // Complete state
-                mongoTemplate.save(dataset);
-                log.info("Successfully updated dataset status to complete for ID: {}", datasetId);
+                // We only log that analytics generated successfully
+                log.info("Successfully generated analytics profile for dataset ID: {}", datasetId);
             }
 
         } catch (Exception e) {
