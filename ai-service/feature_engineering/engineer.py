@@ -4,6 +4,7 @@ import json
 import os
 import logging
 from bson.objectid import ObjectId
+from motor.motor_asyncio import AsyncIOMotorGridFSBucket
 from confluent_kafka import Producer
 from database import db
 
@@ -50,7 +51,8 @@ async def process_feature_engineering(dataset_id: str):
         
     # 2. Download cleaned CSV from GridFS
     try:
-        grid_out = await db.fs.open_download_stream(ObjectId(cleaned_file_id))
+        fs = AsyncIOMotorGridFSBucket(db)
+        grid_out = await fs.open_download_stream(ObjectId(cleaned_file_id))
         file_data = await grid_out.read()
         df = pd.read_csv(io.BytesIO(file_data), on_bad_lines='skip', engine='python')
     except Exception as e:
@@ -112,7 +114,8 @@ async def process_feature_engineering(dataset_id: str):
         df.to_csv(csv_buffer, index=False)
         csv_buffer.seek(0)
         
-        engineered_file_id = await db.fs.upload_from_stream(
+        fs = AsyncIOMotorGridFSBucket(db)
+        engineered_file_id = await fs.upload_from_stream(
             f"feature_engineered_{dataset_id}.csv",
             csv_buffer,
             metadata={"datasetId": dataset_id, "type": "engineered"}

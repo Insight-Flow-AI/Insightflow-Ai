@@ -33,8 +33,8 @@ async def consume_kafka():
     
     try:
         consumer = Consumer(conf)
-        consumer.subscribe([KAFKA_TOPIC, "feature-engineering"])
-        logger.info(f"Subscribed to Kafka topics: {KAFKA_TOPIC}, feature-engineering at {KAFKA_BROKER}")
+        consumer.subscribe([KAFKA_TOPIC, "feature-engineering", "feature-engineered", "dataset-understood", "problem-detected", "model-selection-complete"])
+        logger.info(f"Subscribed to Kafka topics: {KAFKA_TOPIC}, feature-engineering, feature-engineered, dataset-understood, problem-detected, model-selection-complete at {KAFKA_BROKER}")
     except Exception as e:
         logger.error(f"Failed to connect to Kafka: {e}")
         return
@@ -59,7 +59,8 @@ async def consume_kafka():
             topic = msg.topic()
             logger.info(f"Received Kafka event on {topic}: {payload}")
             
-            dataset_id = payload.get("datasetId")
+            # Note: Phase 4 passes dataset_id as "dataset_id" instead of "datasetId"
+            dataset_id = payload.get("datasetId") or payload.get("dataset_id")
             if dataset_id:
                 if topic == KAFKA_TOPIC:
                     # Trigger the Phase 2 & 3 pipeline asynchronously
@@ -68,6 +69,22 @@ async def consume_kafka():
                     # Trigger the Phase 4 pipeline asynchronously
                     from feature_engineering.engineer import process_feature_engineering
                     asyncio.create_task(process_feature_engineering(dataset_id))
+                elif topic == "feature-engineered":
+                    # Trigger the Phase 5 pipeline asynchronously
+                    from dataset_understanding.orchestrator import process_dataset_understanding
+                    asyncio.create_task(process_dataset_understanding(dataset_id))
+                elif topic == "dataset-understood":
+                    # Trigger the Phase 6 pipeline asynchronously
+                    from problem_detection.orchestrator import process_problem_detection
+                    asyncio.create_task(process_problem_detection(dataset_id))
+                elif topic == "problem-detected":
+                    # Trigger the Phase 7 pipeline asynchronously
+                    from model_selection.selector import process_model_selection
+                    asyncio.create_task(process_model_selection(dataset_id))
+                elif topic == "model-selection-complete":
+                    # Trigger the Phase 8 pipeline asynchronously
+                    from model_training.orchestrator import process_model_training
+                    asyncio.create_task(process_model_training(dataset_id))
         except Exception as e:
             logger.error(f"Failed to process Kafka message: {e}")
 

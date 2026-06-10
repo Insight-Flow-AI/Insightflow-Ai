@@ -24,7 +24,6 @@ Running every possible algorithm is computationally expensive. The engine intell
 ### 4. Internal ML Processing Steps
 1. The engine checks the number of rows, columns, and target cardinality.
 2. It instantiates a list of 3 to 5 candidate models from Scikit-Learn/XGBoost.
-
 ---
 
 ## PHASE 8 — MODEL TRAINING
