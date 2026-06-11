@@ -1,6 +1,15 @@
 import os
+import logging
+
 from motor.motor_asyncio import AsyncIOMotorClient
 
-MONGO_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27018/insightflow")
+logger = logging.getLogger(__name__)
+
+MONGO_URI = os.getenv("MONGODB_URI", "mongodb://mongodb:27017/insightflow")
+
+# Always explicitly use 'insightflow' — get_default_database() can fail
+# with Atlas URIs that have query params after the database name
 client = AsyncIOMotorClient(MONGO_URI)
-db = client.get_default_database()
+db = client["insightflow"]
+
+logger.info(f"[DB] MongoDB client initialised — URI prefix: {MONGO_URI[:40]}...")

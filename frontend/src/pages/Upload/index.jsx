@@ -5,12 +5,34 @@ import Badge from '../../components/common/Badge';
 import { Upload as UploadIcon, CheckCircle, Clock, AlertCircle, Loader } from 'lucide-react';
 import { datasetService } from '../../services/datasetService';
 
-const PIPELINE_STEPS = [
-  { id: 1, name: 'Receive', description: 'File upload & validation' },
-  { id: 2, name: 'Schema', description: 'Data structure analysis' },
-  { id: 3, name: 'AI Analysis', description: 'ML preprocessing' },
-  { id: 4, name: 'Dashboard', description: 'Chart generation' },
-  { id: 5, name: 'Report', description: 'Summary creation' },
+const PIPELINE_STAGES = [
+  {
+    id: 'stage-1',
+    name: 'Preprocessing',
+    steps: [
+      { id: 1, name: 'Upload', description: 'Receive dataset' },
+      { id: 2, name: 'Validate', description: 'Data structure check' },
+      { id: 3, name: 'Clean', description: 'Missing values & outliers' },
+      { id: 4, name: 'Engineer', description: 'Feature encoding & scaling' },
+    ]
+  },
+  {
+    id: 'stage-2',
+    name: 'Data Intelligence',
+    steps: [
+      { id: 5, name: 'Understand', description: 'Dataset profiling' },
+      { id: 6, name: 'Detect', description: 'Problem type & strategy' },
+    ]
+  },
+  {
+    id: 'stage-3',
+    name: 'AutoML Training',
+    steps: [
+      { id: 7, name: 'Select', description: 'Model selection' },
+      { id: 8, name: 'Train', description: 'Hyperparameter tuning' },
+      { id: 9, name: 'Evaluate', description: 'Performance metrics' },
+    ]
+  }
 ];
 
 const MOCK_HISTORY = [
@@ -230,16 +252,25 @@ export default function Upload() {
       </div>
 
       {/* Pipeline Legend */}
-      <Card className="mb-8">
-        <h3 className="text-base font-semibold text-white mb-5">Decision Intelligence Pipeline</h3>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-          {PIPELINE_STEPS.map((step) => (
-            <div key={step.id} className="flex flex-col items-center p-3 rounded-lg bg-dark-card/20 border border-dark-border/40 text-center">
-              <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 text-primary font-bold flex items-center justify-center mb-2.5">
-                {step.id}
+      <Card className="mb-8 p-6">
+        <h3 className="text-base font-semibold text-white mb-6">Decision Intelligence Pipeline</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {PIPELINE_STAGES.map((stage) => (
+            <div key={stage.id} className="bg-dark-card/30 border border-dark-border/40 rounded-xl p-4">
+              <h4 className="text-primary text-sm font-semibold mb-3 border-b border-dark-border/50 pb-2">{stage.name}</h4>
+              <div className="space-y-3">
+                {stage.steps.map((step) => (
+                  <div key={step.id} className="flex items-start gap-3">
+                    <div className="w-6 h-6 shrink-0 rounded bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold flex items-center justify-center">
+                      {step.id}
+                    </div>
+                    <div>
+                      <p className="text-white text-xs font-medium">{step.name}</p>
+                      <p className="text-gray-400 text-[10px] leading-tight mt-0.5">{step.description}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <p className="text-white text-xs font-semibold mb-1">{step.name}</p>
-              <p className="text-gray-400 text-[10px] leading-relaxed">{step.description}</p>
             </div>
           ))}
         </div>
@@ -281,44 +312,66 @@ export default function Upload() {
                 </div>
 
                 {/* Pipeline Progress */}
-                <div className="space-y-3">
-                  {/* Step Progress Bar */}
-                  <div className="flex items-center gap-1.5 mb-2.5">
-                    {PIPELINE_STEPS.map((step) => (
-                      <div
-                        key={step.id}
-                        className={`flex-1 h-1 rounded-full transition-colors duration-500 ${
-                          step.id <= file.currentStep
-                            ? 'bg-gradient-to-r from-primary to-primary-light'
-                            : 'bg-dark-border'
-                        }`}
-                      ></div>
-                    ))}
-                  </div>
-
-                  {/* Step Details */}
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {PIPELINE_STEPS.map((step) => {
-                      let icon = null;
-                      let color = 'text-gray-500';
-
-                      if (step.id < file.currentStep) {
-                        icon = <CheckCircle size={14} className="text-green-400" />;
-                        color = 'text-green-400 font-medium';
-                      } else if (step.id === file.currentStep) {
-                        if (file.status === 'failed') {
-                          icon = <AlertCircle size={14} className="text-red-400" />;
-                          color = 'text-red-400 font-medium';
-                        } else {
-                          icon = <Clock size={14} className="text-primary animate-spin" />;
-                          color = 'text-primary font-medium';
-                        }
+                <div className="mt-4 pt-4 border-t border-dark-border/30">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {PIPELINE_STAGES.map((stage) => {
+                      const stageStartStep = stage.steps[0].id;
+                      const stageEndStep = stage.steps[stage.steps.length - 1].id;
+                      
+                      const isStageComplete = file.currentStep > stageEndStep || file.status === 'complete';
+                      const isStageActive = file.currentStep >= stageStartStep && file.currentStep <= stageEndStep && file.status !== 'complete';
+                      
+                      let cardClass = 'glass-card-pending';
+                      
+                      if (isStageComplete) {
+                        cardClass = 'glass-card glass-card-complete';
+                      } else if (isStageActive) {
+                        cardClass = 'glass-card glass-card-active';
+                      } else {
+                        cardClass = 'glass-card glass-card-pending';
                       }
 
                       return (
-                        <div key={step.id} className={`text-[10px] text-center ${color}`}>
-                          {icon && <div className="flex justify-center mb-1">{icon}</div>}
-                          <span>{step.name}</span>
+                        <div key={stage.id} className={`p-4 rounded-xl transition-all duration-500 ${cardClass}`}>
+                          <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-2">
+                            <span className="text-sm font-bold text-white tracking-wide">{stage.name}</span>
+                            {isStageComplete && <CheckCircle size={18} className="text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]" />}
+                            {isStageActive && file.status !== 'failed' && <Loader size={18} className="text-blue-400 animate-spin drop-shadow-[0_0_8px_rgba(59,130,246,0.8)]" />}
+                            {isStageActive && file.status === 'failed' && <AlertCircle size={18} className="text-red-400 drop-shadow-[0_0_8px_rgba(248,113,113,0.8)]" />}
+                          </div>
+                          
+                          <div className="space-y-2.5">
+                            {stage.steps.map((step) => {
+                              const isStepComplete = file.currentStep > step.id || file.status === 'complete';
+                              const isStepActive = file.currentStep === step.id && file.status !== 'complete';
+                              
+                              let stepColor = 'text-gray-500';
+                              let icon = null;
+                              
+                              if (isStepComplete) {
+                                stepColor = 'text-emerald-300 font-medium drop-shadow-sm';
+                                icon = <CheckCircle size={14} className="text-emerald-400" />;
+                              } else if (isStepActive) {
+                                if (file.status === 'failed') {
+                                  stepColor = 'text-red-300 font-bold drop-shadow-md';
+                                  icon = <AlertCircle size={14} className="text-red-400 pulse-icon" />;
+                                } else {
+                                  stepColor = 'text-blue-300 font-bold drop-shadow-md';
+                                  icon = <Clock size={14} className="text-blue-400 pulse-icon" />;
+                                }
+                              }
+
+                              return (
+                                <div key={step.id} className={`flex items-start gap-2.5 text-xs ${stepColor} transition-all duration-300`}>
+                                  <div className="w-4 flex justify-center mt-0.5">{icon || <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>}</div>
+                                  <div className="flex flex-col">
+                                    <span className="leading-tight">{step.name}</span>
+                                    {isStepActive && <span className="text-[10px] text-blue-200/70 mt-0.5">Processing...</span>}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       );
                     })}
