@@ -336,22 +336,6 @@ cd insightflow-ai
 
 ---
 
-# Docker Setup (Recommended)
-
-The easiest way to run the entire application (frontend, backend microservices, and databases) is using Docker Compose:
-
-```bash
-# Run everything in detached mode
-docker compose up -d --build
-```
-
-Access the application:
-- **Frontend UI:** http://localhost:5173
-- **API Gateway:** http://localhost:4000
-
-
----
-
 # Frontend Setup
 
 ```bash
@@ -398,17 +382,16 @@ kafka-server-start.sh config/server.properties
 
 ---
 
-# API Endpoints Status
+# API Endpoints
 
-| Method | Endpoint | Description | Status |
-|---|---|---|---|
-| POST | `/api/auth/register` | Register new user in MongoDB Atlas | ✅ Completed & Working |
-| POST | `/api/auth/login` | Login and return JWT token | ✅ Completed & Working |
-| POST | `/api/dataset/upload` | Upload dataset (CSV supported, saving to GridFS) | ✅ Completed & Working (Pending Excel/JSON) |
-| GET | `/api/dataset/history` | Retrieve user's dataset history | ✅ Completed & Working |
-| GET | `/api/analytics/report` | Analytics report generation | 🚧 Pending Implementation |
-| GET | `/api/charts` | Dashboard charts data retrieval | 🚧 Pending Implementation |
-| GET | `/api/predictions` | AI predictions from FastAPI | 🚧 Pending Implementation |
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | /api/auth/login | Login |
+| POST | /api/auth/register | Register |
+| POST | /api/dataset/upload | Upload dataset |
+| GET | /api/analytics/report | Analytics report |
+| GET | /api/charts | Dashboard charts |
+| GET | /api/predictions | AI predictions |
 
 ---
 
@@ -589,4 +572,4 @@ MIT License
 |---|---|
 | S. Gurumurthy | Project Lead |
 | S. Harevasu | ML Engineer  |
-| D. Hemavarshini | Frontend Developer |
+| D. Hemavarshini | Frontend Developer|
